@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a2744">
+<title>ProInspect — InterNACHI Home Inspection Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2744;
+    --navy-light: #243358;
+    --gold: #c9973a;
+    --gold-light: #e8b85a;
+    --cream: #f8f5ef;
+    --white: #ffffff;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-800: #1f2937;
+    --red: #dc2626;
+    --orange: #ea580c;
+    --yellow: #ca8a04;
+    --green: #16a34a;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(26,39,68,0.12);
+    --shadow-lg: 0 8px 40px rgba(26,39,68,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--gray-800);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* TOP NAV */
+  .top-bar {
+    background: var(--navy);
+    color: white;
+    padding: 0 16px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .top-bar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--gold-light);
+    letter-spacing: 0.5px;
+  }
+  .top-bar-logo span { color: white; font-size: 13px; font-family: 'DM Sans', sans-serif; display: block; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+  .top-actions { display: flex; gap: 8px; }
+  .btn-icon {
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: white;
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .btn-icon:hover { background: rgba(255,255,255,0.22); }
+
+  /* SECTION NAV TABS */
+  .section-nav {
+    background: var(--navy-light);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 8px;
+    gap: 4px;
+    border-bottom: 2px solid var(--gold);
+  }
+  .section-nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    background: none;
+  }
+  .nav-tab.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
+  .nav-tab:hover { color: white; }
+
+  /* MAIN CONTENT */
+  .main { padding: 16px; max-width: 900px; margin: 0 auto; }
+
+  /* SECTION PANELS */
+  .section-panel { display: none; }
+  .section-panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: var(--navy);
+    color: white;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header-icon { font-size: 20px; }
+  .card-header h3 { font-family: 'DM Serif Display', serif; font-size: 17px; font-weight: 400; flex: 1; }
+  .card-header .badge {
+    font-size: 11px;
+    background: var(--gold);
+    color: var(--navy);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .card-header .chevron { transition: transform 0.25s; font-size: 14px; }
+  .card-header.collapsed .chevron { transform: rotate(-90deg); }
+  .card-body { padding: 18px; }
+  .card-body.collapsed { display: none; }
+
+  /* FORM ELEMENTS */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 520px) {
+    .form-row { grid-template-columns: 1fr; }
+    .form-row.triple { grid-template-columns: 1fr 1fr; }
+  }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--gray-800);
+    background: var(--gray-100);
+    transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: white;
+  }
+  .form-group textarea { min-height: 90px; resize: vertical; }
+
+  /* CONDITION RATING */
+  .condition-group { margin-bottom: 16px; }
+  .condition-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .condition-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-200);
+    margin-bottom: 8px;
+    background: var(--gray-100);
+    transition: all 0.2s;
+  }
+  .condition-item:hover { border-color: var(--gray-400); background: white; }
+  .condition-item-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .condition-check {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    accent-color: var(--navy);
+    cursor: pointer;
+  }
+  .condition-title { font-size: 14px; font-weight: 500; flex: 1; }
+  .condition-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+  .severity-btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1.5px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .severity-btn.nr { border-color: var(--gray-400); color: var(--gray-600); }
+  .severity-btn.nr.active { background: var(--gray-600); color: white; }
+  .severity-btn.in { border-color: var(--green); color: var(--green); }
+  .severity-btn.in.active { background: var(--green); color: white; }
+  .severity-btn.mo { border-color: var(--yellow); color: var(--yellow); }
+  .severity-btn.mo.active { background: var(--yellow); color: white; }
+  .severity-btn.mj { border-color: var(--orange); color: var(--orange); }
+  .severity-btn.mj.active { background: var(--orange); color: white; }
+  .severity-btn.sa { border-color: var(--red); color: var(--red); }
+  .severity-btn.sa.active { background: var(--red); color: white; }
+
+  .condition-note {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    resize: none;
+    background: white;
+    display: none;
+    min-height: 60px;
+  }
+  .condition-note.visible { display: block; }
+
+  /* PHOTO UPLOAD */
+  .photo-section { margin-top: 14px; }
+  .photo-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+  .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: var(--gray-200);
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .remove-photo {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 22px; height: 22px;
+    background: rgba(220,38,38,0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .add-photo-btn {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 2px dashed var(--gray-400);
+    background: var(--gray-100);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-400);
+    font-size: 11px;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+  .add-photo-btn:hover { border-color: var(--gold); color: var(--gold); background: #fdf9f2; }
+  .add-photo-btn .icon { font-size: 24px; }
+  .photo-input { display: none; }
+
+  /* NARRATIVE */
+  .narrative-box {
+    background: #fdf9f2;
+    border: 1.5px solid var(--gold);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 14px;
+  }
+  .narrative-box label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .narrative-box textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--gray-800);
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    line-height: 1.6;
+  }
+
+  /* OVERALL CONDITION */
+  .overall-condition {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .overall-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: 2px solid;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .overall-btn.nr { border-color: var(--gray-400); color: var(--gray-600); background: transparent; }
+  .overall-btn.nr.active { background: var(--gray-600); color: white; }
+  .overall-btn.in { border-color: var(--green); color: var(--green); background: transparent; }
+  .overall-btn.in.active { background: var(--green); color: white; }
+  .overall-btn.mo { border-color: var(--yellow); color: var(--yellow); background: transparent; }
+  .overall-btn.mo.active { background: var(--yellow); color: white; }
+  .overall-btn.mj { border-color: var(--orange); color: var(--orange); background: transparent; }
+  .overall-btn.mj.active { background: var(--orange); color: white; }
+  .overall-btn.sa { border-color: var(--red); color: var(--red); background: transparent; }
+  .overall-btn.sa.active { background: var(--red); color: white; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 18px;
+    background: var(--gray-100);
+    border-top: 1px solid var(--gray-200);
+    font-size: 11px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* SUMMARY PAGE */
+  .summary-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: white;
+    padding: 32px 20px;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-header::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(201,151,58,0.15);
+  }
+  .summary-header h1 { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 4px; }
+  .summary-header p { opacity: 0.7; font-size: 14px; }
+  .summary-address { font-size: 18px; font-weight: 500; margin-top: 12px; color: var(--gold-light); }
+
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border-top: 3px solid;
+  }
+  .stat-card.sa { border-color: var(--red); }
+  .stat-card.mj { border-color: var(--orange); }
+  .stat-card.mo { border-color: var(--yellow); }
+  .stat-card.in { border-color: var(--green); }
+  .stat-card.nr { border-color: var(--gray-400); }
+  .stat-number { font-size: 32px; font-family: 'DM Serif Display', serif; font-weight: 400; }
+  .stat-card.sa .stat-number { color: var(--red); }
+  .stat-card.mj .stat-number { color: var(--orange); }
+  .stat-card.mo .stat-number { color: var(--yellow); }
+  .stat-card.in .stat-number { color: var(--green); }
+  .stat-card.nr .stat-number { color: var(--gray-600); }
+  .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray-600); margin-top: 2px; }
+
+  .summary-findings { margin-bottom: 20px; }
+  .summary-findings h2 { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 14px; color: var(--navy); }
+  .finding-item {
+    background: white;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-left: 4px solid;
+  }
+  .finding-item.sa { border-color: var(--red); }
+  .finding-item.mj { border-color: var(--orange); }
+  .finding-item.mo { border-color: var(--yellow); }
+  .finding-item.in { border-color: var(--green); }
+  .finding-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .finding-item.sa .finding-dot { background: var(--red); }
+  .finding-item.mj .finding-dot { background: var(--orange); }
+  .finding-item.mo .finding-dot { background: var(--yellow); }
+  .finding-item.in .finding-dot { background: var(--green); }
+  .finding-content h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .finding-content p { font-size: 13px; color: var(--gray-600); }
+  .finding-section { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* BUTTONS */
+  .btn-primary {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    padding: 13px 24px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-secondary {
+    background: white;
+    color: var(--navy);
+    border: 2px solid var(--navy);
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary:hover { background: var(--navy); color: white; }
+  .btn-danger {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  /* PRINT */
+  @media print {
+    .top-bar, .section-nav, .action-bar, .btn-primary, .btn-secondary, .add-photo-btn, .remove-photo { display: none !important; }
+    .section-panel { display: block !important; }
+    .card-body.collapsed { display: block !important; }
+    body { background: white; }
+    .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    .main { padding: 0; max-width: 100%; }
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    display: none;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: var(--radius);
+    width: 100%; max-width: 480px;
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal h2 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 16px; color: var(--navy); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--navy);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 300;
+    transition: transform 0.3s;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* INTERNACHI BADGE */
+  .internachi-bar {
+    background: var(--navy);
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    font-size: 11px;
+    padding: 8px;
+    letter-spacing: 1px;
+  }
+  .internachi-bar strong { color: var(--gold); }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap { height: 4px; background: var(--gray-200); }
+  .progress-bar { height: 4px; background: var(--gold); transition: width 0.4s; }
+
+  .section-icon { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-logo">
+    ProInspect
+    <span>InterNACHI Standards</span>
+  </div>
+  <div class="top-actions">
+    <button class="btn-icon" onclick="saveReport()" title="Save">💾</button>
+    <button class="btn-icon" onclick="generateSummary()" title="Summary">📋</button>
+    <button class="btn-icon" onclick="window.print()" title="Print/PDF">🖨️</button>
+  </div>
+</div>
+
+<div class="progress-bar-wrap">
+  <div class="progress-bar" id="progressBar" style="width:0%"></div>
+</div>
+
+<nav class="section-nav" id="sectionNav">
+  <button class="nav-tab active" onclick="showSection('info')">📋 Info</button>
+  <button class="nav-tab" onclick="showSection('roofing')">🏠 Roof</button>
+  <button class="nav-tab" onclick="showSection('exterior')">🧱 Exterior</button>
+  <button class="nav-tab" onclick="showSection('structure')">🏗️ Structure</button>
+  <button class="nav-tab" onclick="showSection('electrical')">⚡ Electrical</button>
+  <button class="nav-tab" onclick="showSection('hvac')">🌡️ HVAC</button>
+  <button class="nav-tab" onclick="showSection('plumbing')">🔧 Plumbing</button>
+  <button class="nav-tab" onclick="showSection('interior')">🪟 Interior</button>
+  <button class="nav-tab" onclick="showSection('insulation')">🌿 Insulation</button>
+  <button class="nav-tab" onclick="showSection('garage')">🚗 Garage</button>
+  <button class="nav-tab" onclick="showSection('summary')">📊 Summary</button>
+</nav>
+
+<div class="main">
+
+  <!-- =================== PROPERTY INFO =================== -->
+  <div class="section-panel active" id="section-info">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🏡</span>
+        <h3>Property & Inspection Information</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Property Address</label>
+            <input type="text" id="prop_address" placeholder="123 Main Street">
+          </div>
+          <div class="form-group">
+            <label>City, State, ZIP</label>
+            <input type="text" id="prop_city" placeholder="Anytown, ST 00000">
+          </div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Inspection Date</label>
+            <input type="date" id="prop_date">
+          </div>
+          <div class="form-group">
+            <label>Inspection Time</label>
+            <input type="time" id="prop_time">
+          </div>
+          <div class="form-group">
+            <label>Weather Conditions</label>
+            <input type="text" id="prop_weather" placeholder="Clear, 72°F">
+          </div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Year Built</label>
+            <input type="number" id="prop_year" placeholder="1985">
+          </div>
+          <div class="form-group">
+            <label>Square Footage</label>
+            <input type="number" id="prop_sqft" placeholder="2,100">
+          </div>
+          <div class="form-group">
+            <label>Property Type</label>
+            <select id="prop_type">
+              <option>Single Family</option>
+              <option>Condo/Townhouse</option>
+              <option>Multi-Family</option>
+              <option>Mobile/Manufactured</option>
+              <option>Commercial</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Client Name</label>
+            <input type="text" id="client_name" placeholder="John & Jane Smith">
+          </div>
+          <div class="form-group">
+            <label>Client Email</label>
+            <input type="email" id="client_email" placeholder="client@email.com">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Inspector Name</label>
+            <input type="text" id="inspector_name" placeholder="Inspector Name">
+          </div>
+          <div class="form-group">
+            <label>InterNACHI Cert # / License #</label>
+            <input type="text" id="inspector_cert" placeholder="NACHI12345678">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Inspector Company</label>
+            <input type="text" id="inspector_company" placeholder="ABC Inspection Services">
+          </div>
+          <div class="form-group">
+            <label>Inspector Phone</label>
+            <input type="tel" id="inspector_phone" placeholder="(555) 000-0000">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Inspection Report Number</label>
+            <input type="text" id="report_num" placeholder="RPT-2024-001">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label>Limitation / Access Notes</label>
+            <textarea id="limitations" placeholder="List any areas that were inaccessible or excluded from inspection (attic hatch blocked, crawlspace flooded, locked rooms, etc.)..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">📷</span>
+        <h3>Cover / Property Photos</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="photo-section">
+          <div class="photo-section-title">Property Overview Photos</div>
+          <div class="photo-grid" id="photos-cover">
+            <label class="add-photo-btn">
+              <span class="icon">📸</span>
+              <span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-cover')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Property Overview</label>
+          <textarea id="narrative-cover" placeholder="Describe the overall property. Note general condition, orientation, occupancy status, utilities on/off, and any general observations..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <strong style="color:var(--gray-600);font-size:12px;text-transform:uppercase;letter-spacing:0.8px;margin-right:4px;">Rating Key:</strong>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gray-600)"></div><span>NR = Not Rated/Inspected</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span>IN = Inspected/Good</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div><span>MO = Monitor</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><span>MJ = Major Concern</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span>SA = Safety Issue</span></div>
+    </div>
+  </div>
+
+  <!-- =================== ROOFING =================== -->
+  <div class="section-panel" id="section-roofing">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🏠</span>
+        <h3>Roofing System</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Roof Type</label>
+            <select id="roof_type">
+              <option>Asphalt Shingles</option>
+              <option>Metal</option>
+              <option>Tile</option>
+              <option>Flat/Low-Slope</option>
+              <option>Wood Shakes</option>
+              <option>Slate</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Roof Age (approx.)</label>
+            <input type="text" id="roof_age" placeholder="10-12 years">
+          </div>
+          <div class="form-group">
+            <label>Inspection Method</label>
+            <select id="roof_method">
+              <option>Walked</option>
+              <option>Binoculars/Ground</option>
+              <option>Ladder at Eaves</option>
+              <option>Drone</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="condition-group" id="cond-roofing"></div>
+
+        <div class="photo-section">
+          <div class="photo-section-title">Roofing Photos</div>
+          <div class="photo-grid" id="photos-roofing">
+            <label class="add-photo-btn">
+              <span class="icon">📸</span>
+              <span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-roofing')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Roofing</label>
+          <textarea id="narrative-roofing" placeholder="Describe roof condition, estimated remaining life, any repairs needed, flashing condition, gutters, downspouts..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== EXTERIOR =================== -->
+  <div class="section-panel" id="section-exterior">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🧱</span>
+        <h3>Exterior</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Siding Type</label>
+            <select id="siding_type">
+              <option>Vinyl</option><option>Wood</option><option>Brick</option>
+              <option>Stucco</option><option>Fiber Cement</option><option>Aluminum</option>
+              <option>Stone</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Driveway Material</label>
+            <select id="driveway_type">
+              <option>Concrete</option><option>Asphalt</option><option>Gravel</option>
+              <option>Paver</option><option>None</option>
+            </select>
+          </div>
+        </div>
+        <div class="condition-group" id="cond-exterior"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Exterior Photos</div>
+          <div class="photo-grid" id="photos-exterior">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-exterior')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Exterior</label>
+          <textarea id="narrative-exterior" placeholder="Describe siding, windows, doors, decks, grading, drainage, walkways..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== STRUCTURE =================== -->
+  <div class="section-panel" id="section-structure">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🏗️</span>
+        <h3>Structural Components</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Foundation Type</label>
+            <select id="foundation_type">
+              <option>Poured Concrete</option><option>Concrete Block</option>
+              <option>Slab</option><option>Crawlspace</option>
+              <option>Pier & Beam</option><option>Combination</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Framing</label>
+            <select id="framing_type">
+              <option>Wood Frame</option><option>Steel Frame</option>
+              <option>Masonry/Block</option><option>SIP Panels</option>
+            </select>
+          </div>
+        </div>
+        <div class="condition-group" id="cond-structure"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Structural Photos</div>
+          <div class="photo-grid" id="photos-structure">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-structure')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Structure</label>
+          <textarea id="narrative-structure" placeholder="Describe foundation condition, framing, floors, walls, ceilings..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== ELECTRICAL =================== -->
+  <div class="section-panel" id="section-electrical">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">⚡</span>
+        <h3>Electrical System</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Panel Brand</label>
+            <input type="text" id="panel_brand" placeholder="Square D, Siemens...">
+          </div>
+          <div class="form-group">
+            <label>Panel Amperage</label>
+            <select id="panel_amps">
+              <option>100 Amp</option><option>150 Amp</option><option>200 Amp</option>
+              <option>400 Amp</option><option>Unknown</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Panel Type</label>
+            <select id="panel_type">
+              <option>Circuit Breaker</option><option>Fuse Box</option><option>Sub-Panel</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Wiring Type</label>
+            <select id="wiring_type">
+              <option>Copper</option><option>Aluminum (branch)</option>
+              <option>Knob & Tube</option><option>Aluminum (service)</option><option>Mixed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Service Entrance</label>
+            <select id="service_entrance">
+              <option>Overhead</option><option>Underground</option>
+            </select>
+          </div>
+        </div>
+        <div class="condition-group" id="cond-electrical"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Electrical Photos</div>
+          <div class="photo-grid" id="photos-electrical">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-electrical')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Electrical</label>
+          <textarea id="narrative-electrical" placeholder="Describe panel condition, wiring observations, GFCI/AFCI protection, outlets, fixtures..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== HVAC =================== -->
+  <div class="section-panel" id="section-hvac">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🌡️</span>
+        <h3>Heating, Ventilation & Air Conditioning</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Heating Type</label>
+            <select id="heat_type">
+              <option>Gas Forced Air</option><option>Electric Forced Air</option>
+              <option>Heat Pump</option><option>Boiler/Radiant</option>
+              <option>Baseboard Electric</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Heating Brand</label>
+            <input type="text" id="heat_brand" placeholder="Carrier, Trane...">
+          </div>
+          <div class="form-group">
+            <label>Heat System Age</label>
+            <input type="text" id="heat_age" placeholder="8 years">
+          </div>
+        </div>
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>AC Type</label>
+            <select id="ac_type">
+              <option>Central AC</option><option>Heat Pump</option>
+              <option>Window Units</option><option>None</option><option>Mini-Split</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>AC Brand</label>
+            <input type="text" id="ac_brand" placeholder="Carrier, Lennox...">
+          </div>
+          <div class="form-group">
+            <label>AC System Age</label>
+            <input type="text" id="ac_age" placeholder="5 years">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fuel Type</label>
+            <select id="fuel_type">
+              <option>Natural Gas</option><option>Propane</option>
+              <option>Electric</option><option>Oil</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Filter Last Changed</label>
+            <input type="text" id="filter_date" placeholder="Unknown / Recent">
+          </div>
+        </div>
+        <div class="condition-group" id="cond-hvac"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">HVAC Photos</div>
+          <div class="photo-grid" id="photos-hvac">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-hvac')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — HVAC</label>
+          <textarea id="narrative-hvac" placeholder="Describe heating/cooling operation, ductwork, filter, venting, combustion air, thermostat..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== PLUMBING =================== -->
+  <div class="section-panel" id="section-plumbing">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🔧</span>
+        <h3>Plumbing System</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Supply Pipe Material</label>
+            <select id="supply_material">
+              <option>Copper</option><option>CPVC</option><option>PEX</option>
+              <option>Galvanized</option><option>Polybutylene</option><option>Mixed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Drain Pipe Material</label>
+            <select id="drain_material">
+              <option>PVC</option><option>ABS</option><option>Cast Iron</option>
+              <option>Galvanized</option><option>Mixed</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Water Heater Type</label>
+            <select id="wh_type">
+              <option>Tank — Gas</option><option>Tank — Electric</option>
+              <option>Tankless — Gas</option><option>Tankless — Electric</option>
+              <option>Heat Pump WH</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Water Heater Age</label>
+            <input type="text" id="wh_age" placeholder="7 years">
+          </div>
+          <div class="form-group">
+            <label>Water Heater Capacity</label>
+            <input type="text" id="wh_capacity" placeholder="50 gallons">
+          </div>
+        </div>
+        <div class="condition-group" id="cond-plumbing"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Plumbing Photos</div>
+          <div class="photo-grid" id="photos-plumbing">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-plumbing')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Plumbing</label>
+          <textarea id="narrative-plumbing" placeholder="Describe water supply, drainage, water heater condition, fixtures, shut-offs, water pressure, any leaks or moisture..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== INTERIOR =================== -->
+  <div class="section-panel" id="section-interior">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🪟</span>
+        <h3>Interior</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="condition-group" id="cond-interior"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Interior Photos</div>
+          <div class="photo-grid" id="photos-interior">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-interior')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Interior</label>
+          <textarea id="narrative-interior" placeholder="Describe walls, ceilings, floors, windows, doors, stairs, handrails, smoke/CO detectors..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== INSULATION =================== -->
+  <div class="section-panel" id="section-insulation">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🌿</span>
+        <h3>Insulation & Ventilation</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row triple">
+          <div class="form-group">
+            <label>Attic Insulation Type</label>
+            <select id="attic_ins">
+              <option>Fiberglass Batt</option><option>Blown Fiberglass</option>
+              <option>Blown Cellulose</option><option>Spray Foam</option><option>None</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Attic R-Value (approx.)</label>
+            <input type="text" id="attic_rvalue" placeholder="R-30">
+          </div>
+          <div class="form-group">
+            <label>Crawlspace Insulation</label>
+            <select id="crawl_ins">
+              <option>None</option><option>Fiberglass Batt</option>
+              <option>Rigid Foam</option><option>Spray Foam</option><option>N/A</option>
+            </select>
+          </div>
+        </div>
+        <div class="condition-group" id="cond-insulation"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Insulation & Attic Photos</div>
+          <div class="photo-grid" id="photos-insulation">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-insulation')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Insulation & Ventilation</label>
+          <textarea id="narrative-insulation" placeholder="Describe attic ventilation, insulation levels, vapor barriers, crawlspace conditions..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== GARAGE =================== -->
+  <div class="section-panel" id="section-garage">
+    <div class="card">
+      <div class="card-header" onclick="toggleCard(this)">
+        <span class="card-header-icon">🚗</span>
+        <h3>Garage</h3>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Garage Type</label>
+            <select id="garage_type">
+              <option>Attached</option><option>Detached</option><option>None</option>
+              <option>Carport</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Number of Cars</label>
+            <select id="garage_cars">
+              <option>1 Car</option><option>2 Car</option><option>3+ Car</option>
+            </select>
+          </div>
+        </div>
+        <div class="condition-group" id="cond-garage"></div>
+        <div class="photo-section">
+          <div class="photo-section-title">Garage Photos</div>
+          <div class="photo-grid" id="photos-garage">
+            <label class="add-photo-btn"><span class="icon">📸</span><span>Add Photo</span>
+              <input type="file" class="photo-input" accept="image/*" multiple onchange="addPhotos(this,'photos-garage')">
+            </label>
+          </div>
+        </div>
+        <div class="narrative-box">
+          <label>📝 Inspector Narrative — Garage</label>
+          <textarea id="narrative-garage" placeholder="Describe garage door operation, firewall separation, floor condition, vehicle door auto-reverse..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== SUMMARY =================== -->
+  <div class="section-panel" id="section-summary">
+    <div class="action-bar">
+      <button class="btn-primary" onclick="generateSummary()">🔄 Regenerate Summary</button>
+      <button class="btn-secondary" onclick="window.print()">🖨️ Print / Save PDF</button>
+    </div>
+    <div id="summaryContent">
+      <div style="text-align:center;padding:40px;color:var(--gray-400);">
+        <div style="font-size:48px;margin-bottom:12px;">📊</div>
+        <div style="font-size:18px;font-family:'DM Serif Display',serif;">No summary yet</div>
+        <div style="margin-top:8px;font-size:14px;">Complete the inspection sections and click "Regenerate Summary"</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<div class="internachi-bar">
+  Performed in accordance with <strong>InterNACHI® Standards of Practice</strong> &nbsp;|&nbsp; www.nachi.org
+</div>
+
+<!-- Save Modal -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal">
+    <h2>Report Saved ✓</h2>
+    <p style="color:var(--gray-600);line-height:1.6;">Your inspection report has been saved to this device's local storage. You can close this tab and return to continue editing.</p>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="document.getElementById('saveModal').classList.remove('open')">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ====================== INSPECTION ITEMS DATA ======================
+const inspectionData = {
+  roofing: [
+    { id: 'rf1', title: 'Roof Covering — Shingles/Surface Material' },
+    { id: 'rf2', title: 'Flashing (Chimney, Valleys, Walls, Penetrations)' },
+    { id: 'rf3', title: 'Ridge Cap' },
+    { id: 'rf4', title: 'Gutters & Downspouts' },
+    { id: 'rf5', title: 'Chimney (Masonry, Cap, Flashing)' },
+    { id: 'rf6', title: 'Skylights & Roof Penetrations' },
+    { id: 'rf7', title: 'Fascia & Soffit' },
+    { id: 'rf8', title: 'Ventilation (Ridge, Soffit, Attic Vents)' },
+    { id: 'rf9', title: 'Evidence of Ponding Water / Ice Dams' },
+  ],
+  exterior: [
+    { id: 'ex1', title: 'Wall Cladding / Siding' },
+    { id: 'ex2', title: 'Trim & Exterior Finishes' },
+    { id: 'ex3', title: 'Exterior Windows & Frames' },
+    { id: 'ex4', title: 'Exterior Doors' },
+    { id: 'ex5', title: 'Deck / Porch / Patio' },
+    { id: 'ex6', title: 'Stairs, Handrails & Guards (Exterior)' },
+    { id: 'ex7', title: 'Grading & Drainage' },
+    { id: 'ex8', title: 'Walkways & Driveways' },
+    { id: 'ex9', title: 'Vegetation / Landscape Concerns' },
+    { id: 'ex10', title: 'Retaining Walls & Site Features' },
+  ],
+  structure: [
+    { id: 'st1', title: 'Foundation Walls' },
+    { id: 'st2', title: 'Floor Framing / Joists / Girders' },
+    { id: 'st3', title: 'Columns & Piers' },
+    { id: 'st4', title: 'Roof Framing / Rafters / Trusses' },
+    { id: 'st5', title: 'Wall Framing' },
+    { id: 'st6', title: 'Evidence of Settlement / Movement' },
+    { id: 'st7', title: 'Evidence of Water Intrusion' },
+    { id: 'st8', title: 'Crawlspace Conditions' },
+    { id: 'st9', title: 'Basement (if applicable)' },
+  ],
+  electrical: [
+    { id: 'el1', title: 'Service Entry & Conductors' },
+    { id: 'el2', title: 'Main Electrical Panel' },
+    { id: 'el3', title: 'Sub-Panel(s)' },
+    { id: 'el4', title: 'Branch Circuit Wiring' },
+    { id: 'el5', title: 'GFCI Protection (Bathrooms, Kitchen, Exterior, Garage)' },
+    { id: 'el6', title: 'AFCI Protection' },
+    { id: 'el7', title: 'Outlets / Receptacles' },
+    { id: 'el8', title: 'Switches & Fixtures' },
+    { id: 'el9', title: 'Smoke & CO Detectors' },
+    { id: 'el10', title: 'Grounding & Bonding' },
+    { id: 'el11', title: 'Aluminum Branch Circuit Wiring (if present)' },
+  ],
+  hvac: [
+    { id: 'hv1', title: 'Heating System Operation' },
+    { id: 'hv2', title: 'Cooling System Operation' },
+    { id: 'hv3', title: 'Ductwork & Distribution' },
+    { id: 'hv4', title: 'Flue / Venting / Combustion Air' },
+    { id: 'hv5', title: 'Thermostat' },
+    { id: 'hv6', title: 'Filter Condition' },
+    { id: 'hv7', title: 'Gas Connections (if applicable)' },
+    { id: 'hv8', title: 'Fireplace / Wood Stove' },
+    { id: 'hv9', title: 'Kitchen Exhaust Fan' },
+    { id: 'hv10', title: 'Bath Exhaust Fans' },
+  ],
+  plumbing: [
+    { id: 'pl1', title: 'Water Supply Lines (visible)' },
+    { id: 'pl2', title: 'Drain, Waste & Vent (DWV) System' },
+    { id: 'pl3', title: 'Water Heater' },
+    { id: 'pl4', title: 'Kitchen Plumbing & Fixtures' },
+    { id: 'pl5', title: 'Bathroom 1 — Fixtures & Drains' },
+    { id: 'pl6', title: 'Bathroom 2 — Fixtures & Drains' },
+    { id: 'pl7', title: 'Bathroom 3 — Fixtures & Drains' },
+    { id: 'pl8', title: 'Laundry / Utility Connections' },
+    { id: 'pl9', title: 'Main Water Shut-Off Valve' },
+    { id: 'pl10', title: 'Sump Pump (if present)' },
+    { id: 'pl11', title: 'Exterior Hose Bibs' },
+  ],
+  interior: [
+    { id: 'in1', title: 'Interior Walls & Ceilings' },
+    { id: 'in2', title: 'Interior Floors' },
+    { id: 'in3', title: 'Interior Windows & Sills' },
+    { id: 'in4', title: 'Interior Doors & Hardware' },
+    { id: 'in5', title: 'Stairs, Handrails & Guardrails' },
+    { id: 'in6', title: 'Kitchen — Cabinets, Counters & Appliances' },
+    { id: 'in7', title: 'Bathrooms — Tile, Caulk & Waterproofing' },
+    { id: 'in8', title: 'Smoke Detectors — Placement & Function' },
+    { id: 'in9', title: 'CO Detectors — Placement & Function' },
+    { id: 'in10', title: 'Attic Access & Hatch' },
+  ],
+  insulation: [
+    { id: 'is1', title: 'Attic Insulation' },
+    { id: 'is2', title: 'Attic Ventilation' },
+    { id: 'is3', title: 'Crawlspace / Basement Insulation' },
+    { id: 'is4', title: 'Vapor Barrier' },
+    { id: 'is5', title: 'Wall Insulation (visible)' },
+    { id: 'is6', title: 'Exhaust Fan Terminations' },
+  ],
+  garage: [
+    { id: 'ga1', title: 'Garage Door(s) Operation & Safety Reverse' },
+    { id: 'ga2', title: 'Garage Door Opener' },
+    { id: 'ga3', title: 'Fire-Rated Door to Living Space' },
+    { id: 'ga4', title: 'Garage Floor' },
+    { id: 'ga5', title: 'Garage Walls & Ceiling (Fire Separation)' },
+    { id: 'ga6', title: 'Overhead Gas Heater / Appliances (if present)' },
+    { id: 'ga7', title: 'Attic Access in Garage (if present)' },
+  ]
+};
+
+// State
+let ratings = {};
+let notes = {};
+
+// Build condition groups
+function buildConditionGroups() {
+  for (const [section, items] of Object.entries(inspectionData)) {
+    const container = document.getElementById(`cond-${section}`);
+    if (!container) continue;
+    container.innerHTML = `<span class="condition-label">InterNACHI Item Checklist — Rate Each Component</span>`;
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'condition-item';
+      div.innerHTML = `
+        <div class="condition-item-left">
+          <input type="checkbox" class="condition-check" id="chk-${item.id}" onchange="toggleNote('${item.id}')">
+          <div>
+            <div class="condition-title">${item.title}</div>
+            <div class="condition-badges">
+              <button class="severity-btn nr" onclick="setRating('${item.id}','NR',this)">NR</button>
+              <button class="severity-btn in" onclick="setRating('${item.id}','IN',this)">✓ Good</button>
+              <button class="severity-btn mo" onclick="setRating('${item.id}','MO',this)">Monitor</button>
+              <button class="severity-btn mj" onclick="setRating('${item.id}','MJ',this)">⚠ Major</button>
+              <button class="severity-btn sa" onclick="setRating('${item.id}','SA',this)">🚨 Safety</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const noteArea = document.createElement('textarea');
+      noteArea.className = 'condition-note';
+      noteArea.id = `note-${item.id}`;
+      noteArea.placeholder = `Notes for "${item.title}"...`;
+      noteArea.addEventListener('input', () => { notes[item.id] = noteArea.value; });
+      div.appendChild(noteArea);
+      container.appendChild(div);
+    });
+  }
+}
+
+function setRating(itemId, rating, btn) {
+  ratings[itemId] = rating;
+  // Clear sibling buttons
+  const allBtns = btn.parentElement.querySelectorAll('.severity-btn');
+  allBtns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Auto-check item
+  document.getElementById(`chk-${itemId}`).checked = true;
+  // Show note if not good
+  const noteEl = document.getElementById(`note-${itemId}`);
+  if (rating !== 'IN' && rating !== 'NR') {
+    noteEl.classList.add('visible');
+  } else {
+    noteEl.classList.remove('visible');
+  }
+  updateProgress();
+}
+
+function toggleNote(itemId) {
+  const note = document.getElementById(`note-${itemId}`);
+  const chk = document.getElementById(`chk-${itemId}`);
+  if (!chk.checked) {
+    note.classList.remove('visible');
+    delete ratings[itemId];
+    updateProgress();
+  }
+}
+
+function updateProgress() {
+  const total = Object.values(inspectionData).flat().length;
+  const rated = Object.keys(ratings).length;
+  const pct = Math.round((rated / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+// Section nav
+function showSection(id) {
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`section-${id}`).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(t => { if (t.getAttribute('onclick').includes(`'${id}'`)) t.classList.add('active'); });
+  window.scrollTo(0, 0);
+  if (id === 'summary') generateSummary();
+}
+
+// Card toggle
+function toggleCard(header) {
+  header.classList.toggle('collapsed');
+  header.nextElementSibling.classList.toggle('collapsed');
+}
+
+// Photos
+function addPhotos(input, gridId) {
+  const grid = document.getElementById(gridId);
+  const addBtn = grid.querySelector('.add-photo-btn');
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'photo-thumb';
+      thumb.innerHTML = `
+        <img src="${e.target.result}" alt="Photo">
+        <button class="remove-photo" onclick="this.parentElement.remove()">×</button>
+      `;
+      grid.insertBefore(thumb, addBtn);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+// Generate Summary
+function generateSummary() {
+  const address = document.getElementById('prop_address').value || 'Address Not Entered';
+  const city = document.getElementById('prop_city').value || '';
+  const date = document.getElementById('prop_date').value || 'Date Not Set';
+  const client = document.getElementById('client_name').value || 'Client';
+  const inspector = document.getElementById('inspector_name').value || 'Inspector';
+  const company = document.getElementById('inspector_company').value || '';
+
+  // Count findings
+  let counts = { SA: 0, MJ: 0, MO: 0, IN: 0, NR: 0 };
+  let findings = [];
+
+  for (const [section, items] of Object.entries(inspectionData)) {
+    items.forEach(item => {
+      const r = ratings[item.id];
+      if (r) {
+        counts[r] = (counts[r] || 0) + 1;
+        if (r === 'SA' || r === 'MJ' || r === 'MO') {
+          findings.push({
+            id: item.id,
+            title: item.title,
+            section: section.charAt(0).toUpperCase() + section.slice(1),
+            rating: r,
+            note: notes[item.id] || ''
+          });
+        }
+      }
+    });
+  }
+
+  // Sort findings: SA > MJ > MO
+  const order = { SA: 0, MJ: 1, MO: 2 };
+  findings.sort((a, b) => order[a.rating] - order[b.rating]);
+
+  const ratingLabel = { SA: 'Safety Issue', MJ: 'Major Concern', MO: 'Monitor', IN: 'Good', NR: 'Not Rated' };
+
+  const findingsHTML = findings.length > 0 ? findings.map(f => `
+    <div class="finding-item ${f.rating.toLowerCase()}">
+      <div class="finding-dot"></div>
+      <div class="finding-content">
+        <div class="finding-section">${f.section}</div>
+        <h4>${f.title}</h4>
+        ${f.note ? `<p>${f.note}</p>` : `<p><em>No additional notes</em></p>`}
+      </div>
+      <div style="flex-shrink:0">
+        <span class="severity-btn ${f.rating.toLowerCase()} active" style="cursor:default">${ratingLabel[f.rating]}</span>
+      </div>
+    </div>
+  `).join('') : '<div style="background:white;padding:20px;border-radius:8px;text-align:center;color:var(--gray-400)">No concerns recorded — or complete the inspection checklist above.</div>';
+
+  const narrativeSections = ['cover','roofing','exterior','structure','electrical','hvac','plumbing','interior','insulation','garage'];
+  const sectionNames = ['Overview','Roofing','Exterior','Structure','Electrical','HVAC','Plumbing','Interior','Insulation & Ventilation','Garage'];
+  let narrativeHTML = '';
+  narrativeSections.forEach((ns, i) => {
+    const el = document.getElementById(`narrative-${ns}`);
+    if (el && el.value.trim()) {
+      narrativeHTML += `
+        <div class="card" style="margin-bottom:12px;">
+          <div class="card-header" style="cursor:default">
+            <h3>${sectionNames[i]} — Inspector Notes</h3>
+          </div>
+          <div class="card-body" style="line-height:1.7;color:var(--gray-700);">${el.value.replace(/\n/g,'<br>')}</div>
+        </div>
+      `;
+    }
+  });
+
+  const html = `
+    <div class="summary-header">
+      <h1>Home Inspection Report</h1>
+      <p>Prepared for: ${client} &nbsp;|&nbsp; ${date}</p>
+      <div class="summary-address">📍 ${address}${city ? ', ' + city : ''}</div>
+      <p style="margin-top:8px;font-size:13px;opacity:0.6">Inspector: ${inspector}${company ? ' — ' + company : ''}</p>
+    </div>
+
+    <div class="summary-stats">
+      <div class="stat-card sa">
+        <div class="stat-number">${counts.SA || 0}</div>
+        <div class="stat-label">🚨 Safety Issues</div>
+      </div>
+      <div class="stat-card mj">
+        <div class="stat-number">${counts.MJ || 0}</div>
+        <div class="stat-label">⚠️ Major Concerns</div>
+      </div>
+      <div class="stat-card mo">
+        <div class="stat-number">${counts.MO || 0}</div>
+        <div class="stat-label">👁 Monitor</div>
+      </div>
+      <div class="stat-card in">
+        <div class="stat-number">${counts.IN || 0}</div>
+        <div class="stat-label">✅ Good / OK</div>
+      </div>
+      <div class="stat-card nr">
+        <div class="stat-number">${counts.NR || 0}</div>
+        <div class="stat-label">○ Not Rated</div>
+      </div>
+    </div>
+
+    <div class="summary-findings">
+      <h2>Priority Findings</h2>
+      ${findingsHTML}
+    </div>
+
+    ${narrativeHTML ? `<div class="summary-findings"><h2>Inspector Narratives</h2>${narrativeHTML}</div>` : ''}
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header" style="cursor:default">
+        <h3>⚖️ Scope & Limitations</h3>
+      </div>
+      <div class="card-body" style="font-size:13px;line-height:1.7;color:var(--gray-600);">
+        ${document.getElementById('limitations').value || 'No limitations noted.'}
+        <br><br>
+        <strong>This report is prepared in accordance with InterNACHI® Standards of Practice.</strong> The inspection is a visual examination of the readily accessible areas of the home and is not technically exhaustive. The inspector makes no representations regarding items that were not inspected due to limited access, concealment, or conditions present at the time of inspection. Recommend evaluation and repair by licensed contractors for all items rated Major Concern or Safety Issue prior to closing.
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:16px;color:var(--gray-400);font-size:12px;border-top:1px solid var(--gray-200);">
+      InterNACHI® Certified Inspector &nbsp;|&nbsp; www.nachi.org &nbsp;|&nbsp; Report Generated: ${new Date().toLocaleString()}
+    </div>
+  `;
+
+  document.getElementById('summaryContent').innerHTML = html;
+  showToast('Summary updated ✓');
+}
+
+// Save report
+function saveReport() {
+  const data = {
+    ratings,
+    notes,
+    fields: {}
+  };
+  document.querySelectorAll('input,select,textarea').forEach(el => {
+    if (el.id) data.fields[el.id] = el.value;
+  });
+  localStorage.setItem('proinspect_report', JSON.stringify(data));
+  document.getElementById('saveModal').classList.add('open');
+}
+
+function loadReport() {
+  const saved = localStorage.getItem('proinspect_report');
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    Object.assign(ratings, data.ratings || {});
+    Object.assign(notes, data.notes || {});
+    for (const [id, val] of Object.entries(data.fields || {})) {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    }
+    // Restore ratings UI
+    for (const [itemId, rating] of Object.entries(ratings)) {
+      const noteEl = document.getElementById(`note-${itemId}`);
+      const noteTxt = notes[itemId];
+      if (noteEl && noteTxt) noteEl.value = noteTxt;
+      const allBtns = document.querySelectorAll(`[onclick="setRating('${itemId}','${rating}',this)"]`);
+      allBtns.forEach(b => { b.classList.add('active'); });
+      if (rating !== 'IN' && rating !== 'NR' && noteEl) noteEl.classList.add('visible');
+      const chk = document.getElementById(`chk-${itemId}`);
+      if (chk) chk.checked = true;
+    }
+    updateProgress();
+    showToast('Report loaded from saved data');
+  } catch(e) { console.error(e); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Set today's date
+document.getElementById('prop_date').valueAsDate = new Date();
+
+// Auto-generate report number
+document.getElementById('report_num').value = 'RPT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*9000)+1000);
+
+// Init
+buildConditionGroups();
+loadReport();
+</script>
+</body>
+</html>
